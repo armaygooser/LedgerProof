@@ -6,19 +6,17 @@
 - Last agent: GLM（收尾会话）
 - Workspace root: `D:\Projects\LedgerProof`
 - Current objective: Finish and publish a runnable CyberGuard-based financial audit migration demo.
-- Current status: P0 delivery files complete; first commit pushed to https://github.com/armaygooser/LedgerProof (public). GHCR default-image retest remains blocked pending an `elsechord` login.
+- Current status: **All P0 complete.** Default GHCR image validated with authenticated pull（digest `sha256:dd4715f6…`），default-image stack rebuilt，three containers healthy，full smoke to `rolled_back`（case 007，42 records）. Repo published at https://github.com/armaygooser/LedgerProof.
 - Immediate next actions:
-  1. User logs into GitHub (as `elsechord`, the package owner) in the in-app browser pane → agent changes `cyberguard-executor` package visibility to Public → rerun default-image build + smoke（`docker compose build --pull cyberguard-governance; docker compose up -d; python scripts/smoke_http.py`）.
-  2. Check README gif/Mermaid rendering on GitHub after publish.
+  1. Optional: org admin makes the GHCR package public（org policy currently forbids member visibility changes）so demo machines need no login.
+  2. Optional: visual check of README gif/Mermaid on GitHub.
 - Active files:
-  - `domainpack/finance-audit.yaml`
-  - `agentteams/workers.yaml` + `agentteams/skills/`
-  - `docs/adr/0001-financial-audit-domain.md`
-  - `GLM_HANDOFF.md`
-- Blockers: `ghcr.io/elsechord/cyberguard-executor:sha-3b34e4c` anonymous pull still `unauthorized`; package owner is `elsechord` (Peichen Chen), which differs from the machine's stored GitHub login `armaygooser`. GitHub in-app browser is parked on https://github.com/login awaiting the user.
+  - `docs/CYBERGUARD_RUNTIME_REUSE.md`（updated with registry validation）
+  - `domainpack/finance-audit.yaml`、`agentteams/`、`docs/adr/0001-financial-audit-domain.md`
+- Blockers: none. GHCR access resolved via user's `docker login ghcr.io`（read:packages token，stored only in Docker credential store，not in repo）.
 - Open questions:
-  - Whether the user controls the `elsechord` account (CyberGuard author) or needs a third party to make the package public.
   - Final demo machine's AgentTeams model/runtime; workers.yaml currently mirrors the ProofOps reference（`deepseek-v4-flash` / `copaw`）。
+  - Whether/when to make the GHCR package public（needs org owner；package remains private today）.
 
 ## Recovery Summary
 

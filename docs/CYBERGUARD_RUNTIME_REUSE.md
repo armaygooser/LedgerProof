@@ -70,7 +70,20 @@ $env:CYBERGUARD_EXECUTOR_BASE='ledgerproof/cyberguard-executor-dev:3b34e4c'
 docker compose up --build
 ```
 
-这验证了同一提交源码与 LedgerProof 适配层的兼容性；它不等于验证 GHCR 中镜像字节。包公开或登录后，应再使用默认镜像做一次 `docker compose build --pull`。
+这验证了同一提交源码与 LedgerProof 适配层的兼容性。
+
+## 默认 GHCR 镜像验证（已完成）
+
+同日稍后，使用具有 `read:packages` 权限的 token 执行 `docker login ghcr.io` 后，默认镜像链路完成真实验证：
+
+```text
+ghcr.io/elsechord/cyberguard-executor:sha-3b34e4c
+digest: sha256:dd4715f6bd2eed0d806b75d16ca1cb97e7534ab2f0ecefa8ba7faa3ae7162845
+```
+
+`docker compose build --pull cyberguard-governance` 以该镜像为 `FROM` 重建金融治理容器，三个容器健康，`scripts/smoke_http.py` 完整跑至 `rolled_back`。
+
+注意：该 package 在组织中仍为私有（组织策略禁止成员改公开）。未登录机器拉取仍会返回 `unauthorized`，换演示机前需要先 `docker login ghcr.io`，或由组织管理员放开公开策略。
 
 ## 运行时边界
 

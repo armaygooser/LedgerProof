@@ -41,7 +41,17 @@
 | `gh auth login --with-token` | failed | Token lacks `read:org`; used direct API + GCM instead. |
 | Anonymous package settings page | 404 | Private package hidden from anonymous users，consistent with `unauthorized` pull. |
 
+## 2026-09-20 默认 GHCR 镜像验证（用户 docker login 后）
+
+| Command/Check | Result | Notes |
+| --- | --- | --- |
+| `docker pull ghcr.io/elsechord/cyberguard-executor:sha-3b34e4c` | passed | Authenticated via user's read:packages token；digest `sha256:dd4715f6bd2eed0d806b75d16ca1cb97e7534ab2f0ecefa8ba7faa3ae7162845`. |
+| `docker compose config` | passed | No local `.env` override；build arg resolved to the default GHCR tag. |
+| `docker compose build --pull cyberguard-governance` | passed | `FROM` resolved by digest from GHCR；image rebuilt. |
+| `docker compose up -d` | passed | Governance recreated and healthy; api/web reused（healthy）. |
+| `scripts/smoke_http.py`（default-image stack） | passed | Case `FIN-2026-0919-007` → `rolled_back`; 42 accumulated audit records; audit head non-empty. |
+
 ## Caveats
 
-- Equivalent source integration passed, but registry image bytes have not been validated（until GHCR access is granted）。
-- The full-container smoke ran against the dev-equivalent base image `ledgerproof/cyberguard-executor-dev:3b34e4c`（same source commit `3b34e4c`）, not the default GHCR tag.
+- Registry image bytes ARE now validated（authenticated pull，2026-09-20）. The earlier dev-equivalent runs used the same source commit `3b34e4c`.
+- Anonymous (unauthenticated) pulls still fail: the package remains private; new machines must `docker login ghcr.io` first.

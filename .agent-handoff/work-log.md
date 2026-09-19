@@ -33,7 +33,14 @@
 - 修复仓库描述乱码（PowerShell 5.1 把无 BOM UTF-8 脚本按 ANSI 解析；改用 Python + UTF-8 JSON 重 PATCH）；README 克隆地址替换为真实仓库（`d6056d0`）。
 - GHCR 探究：包所有者为 `elsechord`（Peichen Chen，CyberGuard 作者），与 `armaygooser` 不是同一账号；匿名访问包设置页 404。内置浏览器已停在 https://github.com/login 等待用户以 `elsechord` 登录后继续改公开。
 
+## 2026-09-20（GHCR 阻塞解除）
+
+- 用户确认 `elsechord` 是其与 Peichen 共有的组织（API 证实 type=Organization）；包设置页显示组织策略禁止成员改可见性，公开路线交回组织管理员（可选）。
+- 用户自行生成 read:packages token 并 `docker login ghcr.io` 成功（token 仅存于本机 Docker 凭据库，未进仓库）。
+- 默认镜像验证完成：`docker pull` 成功（digest `sha256:dd4715f6…`）→ `docker compose build --pull` 重建 → `up -d` 三容器健康 → smoke 至 `rolled_back`（case 007，42 条记录）。
+- `docs/CYBERGUARD_RUNTIME_REUSE.md` 更新：新增"默认 GHCR 镜像验证（已完成）"章节，保留包仍为私有的换机提示。
+
 ## Remaining Operational Work
 
-- After `elsechord` login: change `cyberguard-executor` visibility to Public, then rerun default-image build and smoke（`docker compose build --pull cyberguard-governance`）。
-- Visual check of README gif/Mermaid rendering on GitHub.
+- Optional: org owner makes the GHCR package public for login-free demo machines.
+- Optional: visual check of README gif/Mermaid rendering on GitHub.
