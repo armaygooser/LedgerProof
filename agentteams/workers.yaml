@@ -1,0 +1,80 @@
+# Declarative draft for AgentTeams v1beta1. Upload Skill packages before applying.
+# LedgerProof 默认流程是确定性演示；Worker 文件是受控执行路线的部署草稿。
+# 只有真实部署并留存回执后，才可标记为 AgentTeams live run（见 docs/DEMO_TRUTH_BOUNDARY.md）。
+# model/runtime 沿用 ProofOps 参考（deepseek-v4-flash / copaw），部署前需按目标环境调整。
+apiVersion: agentteams.io/v1beta1
+kind: Worker
+metadata:
+  name: ledgerproof-evidence-sealer
+spec:
+  model: deepseek-v4-flash
+  runtime: copaw
+  skills: [financial-audit-observation]
+  agents: |
+    只封存本次 run_id 的总账、发票、采购订单、供应商主数据与审批日志，为每组输入生成真实 Evidence ID 与 SHA-256。不产出审计判断，不持有提案、审批或执行权限。
+---
+apiVersion: agentteams.io/v1beta1
+kind: Worker
+metadata:
+  name: ledgerproof-reconciliation
+spec:
+  model: deepseek-v4-flash
+  runtime: copaw
+  skills: [financial-audit-observation]
+  agents: |
+    基于证据 ID 勾稽订单、发票、总账与付款，只提交带 Evidence ID 的差异结论。证据只读，不把其他 Agent 的叙述当作账务事实。
+---
+apiVersion: agentteams.io/v1beta1
+kind: Worker
+metadata:
+  name: ledgerproof-anomaly-detection
+spec:
+  model: deepseek-v4-flash
+  runtime: copaw
+  skills: [financial-audit-observation]
+  agents: |
+    只读交易数据并调用确定性风险评分工具，输出可复现的风险命中与 Evidence ID。不得修改交易，不得直接生成处置动作。
+---
+apiVersion: agentteams.io/v1beta1
+kind: Worker
+metadata:
+  name: ledgerproof-relationship-trace
+spec:
+  model: deepseek-v4-flash
+  runtime: copaw
+  skills: [financial-audit-observation]
+  agents: |
+    仅在脱敏关系图中调查人员、供应商与收款账户的关联，输出可追溯的关联证据。无审批权限，不得扩大访问范围。
+---
+apiVersion: agentteams.io/v1beta1
+kind: Worker
+metadata:
+  name: ledgerproof-control-compliance
+spec:
+  model: deepseek-v4-flash
+  runtime: copaw
+  skills: [financial-audit-observation]
+  agents: |
+    对照 domainpack 控制规则与审批日志逐项测试，输出命中的控制点编号与证据。规则与日志只读，不得放宽或改写规则。
+---
+apiVersion: agentteams.io/v1beta1
+kind: Worker
+metadata:
+  name: ledgerproof-action-planner
+spec:
+  model: deepseek-v4-flash
+  runtime: copaw
+  skills: [controlled-payment-action]
+  agents: |
+    作为 Team Leader 汇总全部 Findings，只形成最小影响的白名单止付提案并绑定证据根。L2 提案必须暂停等待人类审批；不得持有或代用审批凭据，不得执行。
+---
+apiVersion: agentteams.io/v1beta1
+kind: Worker
+metadata:
+  name: ledgerproof-independent-verifier
+spec:
+  model: deepseek-v4-flash
+  runtime: copaw
+  skills: [independent-financial-verification]
+  agents: |
+    独立读取执行后的付款状态与审计链，逐项核验六项复核断言，只使用独立观测，不复用执行 Agent 的返回值。回滚发生后立即让旧复核结论失效。

@@ -1,0 +1,80 @@
+name: ledgerproof
+
+x-demo-secrets: &demo-secrets
+  CYBERGUARD_EXECUTOR_TOKEN: ${LEDGERPROOF_EXECUTOR_TOKEN:-ledgerproof-demo-executor-token-change-me}
+  CYBERGUARD_APPROVAL_SECRET: ${LEDGERPROOF_APPROVAL_SECRET:-ledgerproof-demo-approval-secret-change-me}
+  CYBERGUARD_AUDIT_HMAC_KEY: ${CYBERGUARD_AUDIT_HMAC_KEY:-ledgerproof-demo-audit-hmac-key-change-before-production}
+  CYBERGUARD_AUDIT_READER_TOKEN: ${LEDGERPROOF_AUDIT_READER_TOKEN:-ledgerproof-demo-audit-reader-token-change-me}
+  LEDGERPROOF_VERIFIER_TOKEN: ${LEDGERPROOF_VERIFIER_TOKEN:-ledgerproof-demo-verifier-token-change-me}
+
+services:
+  cyberguard-governance:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: adapter/Dockerfile
+      args:
+        CYBERGUARD_EXECUTOR_BASE: ${CYBERGUARD_EXECUTOR_BASE:-ghcr.io/elsechord/cyberguard-executor:sha-3b34e4c}
+    image: ledgerproof/cyberguard-finance-executor:0.1.0
+    environment:
+      <<: *demo-secrets
+      CYBERGUARD_DATA_DIR: /data
+      LEDGERPROOF_FINANCE_STATE_FILE: /data/finance-state.json
+      CYBERGUARD_EXECUTION_MODE: simulation
+    volumes:
+      - ledgerproof-governance-data:/data
+    ports:
+      - "127.0.0.1:18805:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 8s
+    networks:
+      - ledgerproof-net
+
+  ledgerproof-api:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    image: ledgerproof/api:0.1.0
+    environment:
+      LEDGERPROOF_GOVERNANCE_URL: http://cyberguard-governance:8080
+      LEDGERPROOF_EXECUTOR_TOKEN: ${LEDGERPROOF_EXECUTOR_TOKEN:-ledgerproof-demo-executor-token-change-me}
+      LEDGERPROOF_APPROVAL_SECRET: ${LEDGERPROOF_APPROVAL_SECRET:-ledgerproof-demo-approval-secret-change-me}
+      LEDGERPROOF_AUDIT_READER_TOKEN: ${LEDGERPROOF_AUDIT_READER_TOKEN:-ledgerproof-demo-audit-reader-token-change-me}
+      LEDGERPROOF_VERIFIER_TOKEN: ${LEDGERPROOF_VERIFIER_TOKEN:-ledgerproof-demo-verifier-token-change-me}
+    depends_on:
+      cyberguard-governance:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18865:18865"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18865/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 8s
+    networks:
+      - ledgerproof-net
+
+  ledgerproof-web:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    image: ledgerproof/web:0.1.0
+    depends_on:
+      ledgerproof-api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18866:80"
+    networks:
+      - ledgerproof-net
+
+networks:
+  ledgerproof-net:
+    name: ledgerproof-net
+
+volumes:
+  ledgerproof-governance-data:

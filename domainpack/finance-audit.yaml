@@ -1,0 +1,128 @@
+# LedgerProof 金融审计领域包
+# 定义 LedgerProof 演示案件的证据类型、控制规则、动作白名单与复核断言。
+# 迁移到其他审计场景时替换本文件、Agent 调查实现和 CyberGuard adapter；治理协议保持不变。
+apiVersion: ledgerproof.dev/v1
+kind: DomainPack
+metadata:
+  name: finance-audit
+  version: "1.0.0"
+  description: 付款审计领域包：全量风险评分、多 Agent 调查、人工审批、受控止付、独立复核与可回滚释放。
+  boundary: >-
+    演示领域包。交易数据、控制规则命中和付款通道均为固定种子的确定性模拟，
+    不包含真实 ERP、银行连接或在线大模型调用。
+
+evidence:
+  hash_algorithm: sha256
+  root_field: evidence_root_sha256
+  root_rule: 全部证据 SHA-256 排序后再次 SHA-256，作为提案与复核共用的证据根。
+  types:
+    - kind: ledger
+      label: 总账与付款批次
+      source_example: ledger-q3.csv
+      sealed_by: agent-evidence
+    - kind: invoice
+      label: 供应商发票
+      source_example: invoice-8841.pdf
+      sealed_by: agent-evidence
+    - kind: purchase_order
+      label: 采购订单
+      source_example: po-3327.pdf
+      sealed_by: agent-evidence
+    - kind: vendor_master
+      label: 供应商主数据
+      source_example: vendor-master.json
+      sealed_by: agent-evidence
+    - kind: approval_log
+      label: 付款审批日志
+      source_example: approval-log.json
+      sealed_by: agent-evidence
+
+controls:
+  # 调查 Findings 中显式引用的控制点
+  ids:
+    - id: CONTROL-SPLIT-002
+      name: 审批阈值拆分
+      rule: 单笔付款不得拆分以绕过高级审批阈值
+      severity: critical
+      weight: 30
+    - id: CONTROL-VENDOR-007
+      name: 新供应商大额付款
+      rule: 新供应商大额付款必须完成二级复核
+      severity: high
+      weight: 20
+    - id: CONTROL-SOD-004
+      name: 职责分离
+      rule: 付款申请与审批职责必须分离
+      severity: high
+      weight: 15
+  # 全量风险评分使用的信号（与前端控制点展示一致）
+  risk_signals:
+    - name: 审批阈值拆分
+      weight: 30
+      severity: critical
+    - name: 新供应商大额付款
+      weight: 20
+      severity: high
+    - name: 关联联系电话
+      weight: 20
+      severity: high
+    - name: 订单金额不一致
+      weight: 15
+      severity: high
+    - name: 审批路径绕过
+      weight: 15
+      severity: high
+    - name: 周末付款
+      weight: 10
+      severity: medium
+
+actions:
+  approval:
+    human_gate: L2 动作必须由人类审批，批准只绑定当前提案 SHA-256 并带 15 分钟有效期。
+  whitelist:
+    - action: hold_payment_batch
+      risk: L2
+      reversible: true
+      approver: 人类财务负责人
+      constraints:
+        - 仅允许覆盖提案中列出的 transaction_ids（最多 100 笔）
+        - 执行金额必须等于提案 affected_amount
+        - 必须携带提案 evidence_root_sha256
+      executor: cyberguard-governance（金融适配层写入 HELD 状态与领域回执）
+    - action: release_payment_hold
+      risk: L2
+      reversible: false
+      channel: 仅回滚通道
+      approver: 人类（需审批密钥、身份与理由）
+      constraints:
+        - 不删除任何历史审计记录，只追加回滚与释放回执
+        - 必须将先前独立复核结论显式标记为失效
+      executor: cyberguard-governance
+
+verification:
+  performer: agent-verifier（独立复核 Agent）
+  input_rule: 重新读取执行后的付款状态与审计链，不得复用执行函数返回值。
+  assertions:
+    - key: target_held
+      assert: 目标付款批次状态 == HELD
+    - key: transaction_scope_exact
+      assert: 实际止付交易清单与提案 transaction_ids 完全一致
+    - key: affected_amount_exact
+      assert: 实际止付金额与提案 affected_amount 完全一致
+    - key: unaffected_payments_released
+      assert: 未受影响付款数量 == 总体数量 - 提案笔数
+    - key: audit_chain_valid
+      assert: CyberGuard 审计链从头重算通过
+    - key: evidence_root_matches
+      assert: 执行回执证据根 == 提案证据根
+  verdict: 六项全部为真输出 VERIFIED，否则 FAILED；证据不足输出 INCONCLUSIVE。
+  invalidation: 回滚事件发生后，旧复核结论必须标记为 invalidated，再次动作需重新提案与复核。
+
+demo_case:
+  population_count: 1024
+  suspicious_transactions: 3
+  suspicious_amount_each: 98000.0
+  affected_amount_total: 294000.0
+  materiality: 100000.0
+  target: PAY-2026-0919
+  note: 三笔 ¥98,000 阈值拆分付款，演示最小影响止付范围。
