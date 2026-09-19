@@ -225,7 +225,7 @@ function App() {
         }}
       >
         <div className="decision-modal">
-          <Alert type="warning" showIcon message="本次批准只对当前提案哈希有效" description={`Proposal SHA-256: ${state.proposal?.record_sha256 ?? '—'}`} />
+          <Alert type="warning" showIcon message="本次批准只对当前提案哈希有效" description={<span className="hash-wrap">Proposal SHA-256: {state.proposal?.record_sha256 ?? '—'}</span>} />
           <label>审批人</label>
           <Input value={approver} onChange={(event) => setApprover(event.target.value)} />
           <dl>

@@ -51,6 +51,15 @@
 | `docker compose up -d` | passed | Governance recreated and healthy; api/web reused（healthy）. |
 | `scripts/smoke_http.py`（default-image stack） | passed | Case `FIN-2026-0919-007` → `rolled_back`; 42 accumulated audit records; audit head non-empty. |
 
+## 2026-09-20 审批弹窗溢出修复验证
+
+| Command/Check | Result | Notes |
+| --- | --- | --- |
+| Browser reproduce（IAB 1280×720，case 010 awaiting_approval） | confirmed | Modal exceeded viewport right edge；close button clipped；hash unwrapped. |
+| `npm test -- --run` / `npm run build` | passed | 2 tests; build OK（bundle warning unchanged）. |
+| `docker compose build ledgerproof-web` + `up -d` | passed | New bundle deployed；governance/api reused healthy. |
+| Browser verify（same viewport, reopened modal） | passed | Modal fully inside viewport；SHA-256 wraps to two lines；close button/input/buttons intact. Modal closed afterwards; case left at awaiting_approval for demo. |
+
 ## Caveats
 
 - Registry image bytes ARE now validated（authenticated pull，2026-09-20）. The earlier dev-equivalent runs used the same source commit `3b34e4c`.

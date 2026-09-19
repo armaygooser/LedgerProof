@@ -40,7 +40,13 @@
 - 默认镜像验证完成：`docker pull` 成功（digest `sha256:dd4715f6…`）→ `docker compose build --pull` 重建 → `up -d` 三容器健康 → smoke 至 `rolled_back`（case 007，42 条记录）。
 - `docs/CYBERGUARD_RUNTIME_REUSE.md` 更新：新增"默认 GHCR 镜像验证（已完成）"章节，保留包仍为私有的换机提示。
 
+## 2026-09-20（审批弹窗溢出修复）
+
+- 用户报告：1280×720 视口下点击"人工批准止付"后弹窗横向超出视口（复现确认：关闭按钮被裁半、输入框溢出、按钮组偏移）。
+- 根因：`App.tsx` 审批弹窗 Alert 描述直接渲染完整 64 位 SHA-256 不可断行；`.decision-modal` 为 grid，子项默认 `min-width: auto`，长串把内容列撑出弹窗。
+- 修复：哈希改为 `<span className="hash-wrap">` 渲染；CSS 新增 `.decision-modal > * { min-width: 0 }` 与 `.hash-wrap { overflow-wrap: anywhere; word-break: break-all; monospace }`。注意避开了 EvidenceChain 已有的 `.hash-line` 类名（那是三列网格条，混用会再引入布局问题）。
+- 验证：前端测试/构建通过；web 容器重建后浏览器复测，弹窗完整居中、哈希两行换行、关闭按钮完整；已关闭弹窗并保持案件在待审批状态。回滚弹窗共用同一 `.decision-modal` 加固，中文描述可自然换行。
+
 ## Remaining Operational Work
 
-- Optional: org owner makes the GHCR package public for login-free demo machines.
-- Optional: visual check of README gif/Mermaid rendering on GitHub.
+- None required.
