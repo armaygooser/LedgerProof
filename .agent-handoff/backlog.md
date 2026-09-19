@@ -9,11 +9,12 @@
 - [x] Add `docs/adr/0001-financial-audit-domain.md`.
 - [x] Add `.tmp/` and `*.egg-info/` to `.gitignore`; verified no generated artifacts are tracked.
 - [x] Rerun all checks, update handoff, and create the first commit.
-- [ ] Resolve GHCR access and validate the default `ghcr.io/elsechord/cyberguard-executor:sha-3b34e4c` image（blocked on user action: make package public or `docker login ghcr.io`）。
+- [ ] Resolve GHCR access and validate the default `ghcr.io/elsechord/cyberguard-executor:sha-3b34e4c` image（awaiting `elsechord` login in the in-app browser；machine token is `armaygooser` without packages scope）。
 
 ## P1
 
-- [ ] Add a GitHub remote and push only after the user supplies or creates the LedgerProof repository.
-- [ ] Check README animation and Mermaid rendering on GitHub.
+- [x] Create public repository https://github.com/armaygooser/LedgerProof and push `main`（2026-09-20，GLM session，via stored GCM token）。
+- [x] Fix repo description UTF-8 mojibake（PowerShell 5.1 ANSI decode；re-PATCHed via Python）and point README quick-start at the real clone URL。
+- [ ] Check README animation and Mermaid rendering on GitHub（page renders publicly；gif visual check pending）。
 - [ ] Optionally reduce the frontend bundle after the competition demo; current warning is non-blocking.
 - [ ] After real AgentTeams Worker deployment with receipts: mark the Element flow as live run and adjust model/runtime.

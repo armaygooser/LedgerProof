@@ -26,7 +26,14 @@
 - Reran full validation（ruff、pytest、前端测试/构建、compose config、容器 smoke、GIF 帧校验）；default GHCR pull 仍 `unauthorized`，阻塞保留。
 - Created the first Git commit.
 
+## 2026-09-20（GLM GitHub 发布会话）
+
+- 用户授权使用其 GitHub 账号。机器存储凭据（GCM）为 `armaygooser`（scopes gist/repo/workflow）；`gh` 因缺 `read:org` 无法登录，改用直接 API + GCM 推送。
+- 创建公开仓库 https://github.com/armaygooser/LedgerProof 并推送 `main`；密钥扫描通过后才公开。
+- 修复仓库描述乱码（PowerShell 5.1 把无 BOM UTF-8 脚本按 ANSI 解析；改用 Python + UTF-8 JSON 重 PATCH）；README 克隆地址替换为真实仓库（`d6056d0`）。
+- GHCR 探究：包所有者为 `elsechord`（Peichen Chen，CyberGuard 作者），与 `armaygooser` 不是同一账号；匿名访问包设置页 404。内置浏览器已停在 https://github.com/login 等待用户以 `elsechord` 登录后继续改公开。
+
 ## Remaining Operational Work
 
-- After GHCR access is available: rerun default-image build and smoke（`docker compose build --pull cyberguard-governance`）。
-- After the user supplies the GitHub repository URL: add remote, push, and check README rendering.
+- After `elsechord` login: change `cyberguard-executor` visibility to Public, then rerun default-image build and smoke（`docker compose build --pull cyberguard-governance`）。
+- Visual check of README gif/Mermaid rendering on GitHub.
