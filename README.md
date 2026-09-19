@@ -56,7 +56,7 @@ docker login ghcr.io
 ### 2. 启动三个容器
 
 ```bash
-git clone https://github.com/<your-account>/LedgerProof.git
+git clone https://github.com/armaygooser/LedgerProof.git
 cd LedgerProof
 docker compose up --build
 ```
